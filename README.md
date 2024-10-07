@@ -4,9 +4,9 @@ Desarrolla una herramienta para que los usuarios puedan almacenar y gestionar su
 ## Equipo de desarrollo
 | Apellidos y nombres | Rol |
 |---------------------|-----|
-| Felix Romero, Jair | |
-| Guevara Moscoso, David | |
-| Meza Calderón, Ana Cristina| |
-| Tacunan Palomino, Jean | |
-| Tinoco Asto, Sebastián | |
-| Vasquez Miranda, Luis | |
+| Felix Romero, Jair |Product Owner |
+| Guevara Moscoso, David |Developer |
+| Meza Calderón, Ana Cristina|Product Owner|
+| Tacunan Palomino, Jean |Developer|
+| Tinoco Asto, Sebastián |Scrum Master|
+| Vasquez Miranda, Luis |Scrum Master|
