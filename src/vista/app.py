@@ -28,6 +28,9 @@ def abrir_aplicacion(usuario_actual):
         return sitio
 
     # Confirmar salida
+    def cierre_automatico():
+        app.destroy()
+
     def confirmar_salida():
         if messagebox.askyesno("Confirmar Cierre", "¿Estás seguro de que deseas cerrar la aplicación?"):
             app.destroy()
@@ -185,4 +188,8 @@ def abrir_aplicacion(usuario_actual):
 
     # Inicializar tabla
     actualizar_tabla()
+
+    # Cerrar la aplicación después de 1 minuto
+    app.after(60000, cierre_automatico)
+
     app.mainloop()
