@@ -2,12 +2,17 @@ import string
 import random
 import tkinter as tk
 from tkinter import messagebox, ttk, simpledialog
+
 from src.logica.cifrado import cifrar_contraseña, descifrar_contraseña, generar_clave
 from src.logica.gestion import contraseñas, usuarios, agregar_contraseña_favorita, agregar_contraseña_categoria, obtener_contraseñas_ordenadas
 
 # Variable para el tiempo de inactividad en milisegundos
 tiempo_inactividad = 300000  # 5 minutos por defecto
 
+
+def cargar_login():
+    from src.vista.login import abrir_login
+    return abrir_login
 
 def abrir_aplicacion(usuario_actual):
     """Abre la aplicación principal."""
@@ -39,12 +44,19 @@ def abrir_aplicacion(usuario_actual):
     def cierre_automatico():
         messagebox.showinfo("Cierre Automático", "La aplicación se cerrará por inactividad.")
         app.destroy()
+        abrir_login = cargar_login()
+        abrir_login()
 
     # Confirmar salida manual
     def confirmar_salida():
-        if messagebox.askyesno("Confirmar Cierre", "¿Estás seguro de que deseas cerrar la aplicación?"):
-            app.destroy()
+        """Confirma el cierre de la aplicación y regresa al login."""
+        if messagebox.askyesno("Confirmar Cierre",
+                               "¿Estás seguro de que deseas cerrar la aplicación y regresar al login?"):
+            app.destroy()  # Cierra la ventana de la aplicación actual
+            abrir_login = cargar_login()  # Carga la función abrir_login
+            abrir_login()  # Regresa al login
 
+    # Configurar el cierre de ventana (botón de cerrar en la barra de título)
     app.protocol("WM_DELETE_WINDOW", confirmar_salida)
 
     # Función para actualizar la tabla
@@ -66,8 +78,6 @@ def abrir_aplicacion(usuario_actual):
             return tabla.item(seleccionado)["values"][0]
         return None
 
-    # Funciones CRUD
-    # En app.py
 
     def guardar_contraseña():
         """Guarda una nueva contraseña y la asigna a una categoría seleccionada."""
@@ -222,8 +232,8 @@ def abrir_aplicacion(usuario_actual):
     tk.Button(frame_adicionales, text="Filtrar por Categoría", command=buscar_contraseñas, bg="#4CAF50", fg="white", width=20).grid(row=0, column=0, padx=10, pady=5)
     tk.Button(frame_adicionales, text="Cambiar Clave Usuario", command=cambiar_clave_usuario, bg="#FFA500", fg="white", width=20).grid(row=0, column=1, padx=10, pady=5)
     tk.Button(frame_adicionales, text="Configurar Inactividad", command=configurar_tiempo_inactividad, bg="#4CAF50", fg="white", width=20).grid(row=0, column=2, padx=10, pady=5)
-    tk.Button(frame_adicionales, text="Cerrar", command=confirmar_salida, bg="#FF4500", fg="white", width=20).grid(row=0, column=3, padx=10, pady=5)
-
+    tk.Button(frame_adicionales, text="Cerrar", command=confirmar_salida, bg="#FF4500", fg="white", width=20).grid(
+        row=0, column=3, padx=10, pady=5)
     # Tabla de contraseñas
     frame_tabla = tk.Frame(app, bg="#2E3B55")
     frame_tabla.pack(pady=10, fill=tk.BOTH, expand=True)
