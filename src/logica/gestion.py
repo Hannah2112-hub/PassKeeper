@@ -1,5 +1,3 @@
-# src/logica/gestion.py
-
 import re
 
 # Diccionarios globales para almacenar datos
