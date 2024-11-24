@@ -4,6 +4,43 @@ from src.vista.registro import abrir_registro
 from src.vista.app import abrir_aplicacion
 from src.logica.gestion import usuarios
 from src.logica.cifrado import descifrar_contraseña
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import ssl
+
+# Configuración de correo
+USERNAME = "davidandreguevaramoscoso@gmail.com"
+PASSWORD = "grdt bfrj zedj uxzg"  # Sustitauye esto por tu contraseña correcta
+DESTINATARIO = "72508579@continental.edu.pe"
+
+
+def enviar_alerta_intentos():
+    """Envía un correo de alerta por múltiples intentos fallidos."""
+    asunto = "Alerta de Intentos Fallidos"
+    mensaje = MIMEMultipart("alternative")
+    mensaje["Subject"] = asunto
+    mensaje["From"] = USERNAME
+    mensaje["To"] = DESTINATARIO
+
+    html = """
+    <html>
+    <body>
+        Hola,<br>
+        Se han registrado 5 intentos fallidos de inicio de sesión en el sistema.
+    </body>
+    </html>
+    """
+    mensaje.attach(MIMEText(html, "html"))
+
+    context = ssl.create_default_context()
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+            server.login(USERNAME, PASSWORD)
+            server.sendmail(USERNAME, DESTINATARIO, mensaje.as_string())
+            print("Correo de alerta enviado exitosamente.")
+    except Exception as e:
+        print(f"Error al enviar el correo: {e}")
 
 
 def abrir_login():
@@ -12,6 +49,8 @@ def abrir_login():
     ventana_login.title("Inicio de Sesión")
     ventana_login.geometry("400x300")
     ventana_login.configure(bg="#2E3B55")
+
+    intentos_fallidos = [0]  # Contador de intentos fallidos
 
     tk.Label(ventana_login, text="Inicio de Sesión", font=("Arial", 16), fg="white", bg="#2E3B55").pack(pady=10)
 
@@ -40,7 +79,14 @@ def abrir_login():
                 abrir_aplicacion(nombre_usuario)  # Abre la aplicación principal
                 return
 
-        messagebox.showerror("Error", "Credenciales incorrectas.")
+        # Incrementa el contador de intentos fallidos
+        intentos_fallidos[0] += 1
+        messagebox.showerror("Error", f"Credenciales incorrectas. Intentos fallidos: {intentos_fallidos[0]}")
+
+        if intentos_fallidos[0] == 5:
+            enviar_alerta_intentos()  # Enviar correo de alerta
+            messagebox.showwarning("Alerta", "Se han registrado 5 intentos fallidos. Se enviará una alerta.")
+            intentos_fallidos[0] = 0  # Reinicia el contador tras enviar la alerta
 
     tk.Button(ventana_login, text="Iniciar Sesión", command=iniciar_sesion, bg="#4CAF50", fg="white").pack(pady=10)
     tk.Button(ventana_login, text="Registrarse", command=lambda: abrir_registro(ventana_login), bg="#FFA500", fg="white").pack(pady=10)

@@ -97,16 +97,6 @@ def abrir_aplicacion(usuario_actual):
                                      categoria)
         actualizar_tabla()
 
-    # Añadimos un ComboBox para seleccionar la categoría
-    frame_categoria = tk.Frame(app, bg="#2E3B55")
-    frame_categoria.pack(pady=5)
-    tk.Label(frame_categoria, text="Categoría:", bg="#2E3B55", fg="white").grid(row=0, column=0, padx=5)
-    categorias = ["Trabajo", "Personal", "Redes Sociales", "Bancos", "Entretenimiento"]  # Lista de categorías posibles
-    categoria_combobox = ttk.Combobox(frame_categoria, values=categorias, state="readonly")
-    categoria_combobox.grid(row=0, column=1, padx=5)
-
-    # Establecer "Trabajo" como la categoría predeterminada si no se selecciona ninguna
-    categoria_combobox.set("Trabajo")
 
     def ver_contraseña_segura():
         sitio = obtener_sitio_seleccionado()
@@ -158,19 +148,7 @@ def abrir_aplicacion(usuario_actual):
 
         mostrar_resultados(resultados)
 
-    # Añadir un ComboBox para filtrar por categoría
-    frame_filtro_categoria = tk.Frame(app, bg="#2E3B55")
-    frame_filtro_categoria.pack(pady=5)
-    tk.Label(frame_filtro_categoria, text="Filtrar por Categoría:", bg="#2E3B55", fg="white").grid(row=0, column=0,
-                                                                                                   padx=5)
 
-    filtro_categoria_combobox = ttk.Combobox(frame_filtro_categoria, values=["Todas"] + categorias, state="readonly")
-    filtro_categoria_combobox.grid(row=0, column=1, padx=5)
-    filtro_categoria_combobox.set("Todas")  # Por defecto, mostramos todas las contraseñas
-
-    # Añadir un botón para aplicar el filtro
-    tk.Button(frame_filtro_categoria, text="Aplicar Filtro", command=buscar_contraseñas, bg="#4CAF50", fg="white",
-              width=20).grid(row=0, column=2, padx=10, pady=5)
 
     def mostrar_resultados(resultados):
         """Muestra los resultados de la búsqueda."""
@@ -202,15 +180,27 @@ def abrir_aplicacion(usuario_actual):
     # Entradas de datos
     frame_entradas = tk.Frame(app, bg="#2E3B55")
     frame_entradas.pack(pady=5)
+
     tk.Label(frame_entradas, text="Sitio Web:", bg="#2E3B55", fg="white").grid(row=0, column=0, padx=5)
     entry_sitio = tk.Entry(frame_entradas)
     entry_sitio.grid(row=0, column=1, padx=5)
-    tk.Label(frame_entradas, text="Usuario:", bg="#2E3B55", fg="white").grid(row=0, column=2, padx=5)
+
+    tk.Label(frame_entradas, text="Usuario:", bg="#2E3B55", fg="white").grid(row=0, column=4, padx=5)
     entry_usuario_sitio = tk.Entry(frame_entradas)
-    entry_usuario_sitio.grid(row=0, column=3, padx=5)
-    tk.Label(frame_entradas, text="Contraseña:", bg="#2E3B55", fg="white").grid(row=1, column=0, padx=5)
+    entry_usuario_sitio.grid(row=0, column=5, padx=5)
+
+    tk.Label(frame_entradas, text="Contraseña:", bg="#2E3B55", fg="white").grid(row=1, column=0, pady=5)
     entry_contraseña_sitio = tk.Entry(frame_entradas, show="*")
-    entry_contraseña_sitio.grid(row=1, column=1, padx=5)
+    entry_contraseña_sitio.grid(row=1, column=1, pady=5)
+
+    # Añadimos un ComboBox para seleccionar la categoría
+    tk.Label(frame_entradas, text="Categoría:", bg="#2E3B55", fg="white").grid(row=1, column=4, pady=5)
+    categorias = ["Trabajo", "Personal", "Redes Sociales", "Bancos", "Entretenimiento"]
+    categoria_combobox = ttk.Combobox(frame_entradas, values=categorias, state="readonly")
+    categoria_combobox.grid(row=1, column=5, pady=5)
+
+    # Establecer "Trabajo" como la categoría predeterminada si no se selecciona ninguna
+    categoria_combobox.set("Trabajo")
 
     # Botones de gestión de contraseñas
     frame_contraseñas = tk.LabelFrame(app, text="Gestión de Contraseñas", bg="#2E3B55", fg="white")
@@ -222,18 +212,30 @@ def abrir_aplicacion(usuario_actual):
     tk.Button(frame_contraseñas, text="Ver Contraseña", command=ver_contraseña_segura, bg="#FFA500", fg="white", width=15).grid(row=0, column=1, padx=10, pady=5)
     tk.Button(frame_contraseñas, text="Editar", command=editar_contraseña, bg="#FFA500", fg="white", width=15).grid(row=0, column=2, padx=10, pady=5)
     tk.Button(frame_contraseñas, text="Eliminar", command=eliminar_contraseña, bg="#FF4500", fg="white", width=15).grid(row=0, column=3, padx=10, pady=5)
-    tk.Button(frame_contraseñas, text="Marcar Favorita", command=marcar_como_favorita, bg="#4CAF50", fg="white", width=15).grid(row=1, column=0, padx=10, pady=5)
 
     # Botones adicionales
     frame_adicionales = tk.LabelFrame(app, text="Opciones Adicionales", bg="#2E3B55", fg="white")
     frame_adicionales.pack(pady=10)
 
     # Filtro por categoría (tipo de cuenta)
-    tk.Button(frame_adicionales, text="Filtrar por Categoría", command=buscar_contraseñas, bg="#4CAF50", fg="white", width=20).grid(row=0, column=0, padx=10, pady=5)
+    tk.Button(frame_adicionales, text="Marcar como Favorito", command=marcar_como_favorita, bg="#4CAF50", fg="white",
+              width=20).grid(row=0, column=0, padx=10, pady=5)
     tk.Button(frame_adicionales, text="Cambiar Clave Usuario", command=cambiar_clave_usuario, bg="#FFA500", fg="white", width=20).grid(row=0, column=1, padx=10, pady=5)
     tk.Button(frame_adicionales, text="Configurar Inactividad", command=configurar_tiempo_inactividad, bg="#4CAF50", fg="white", width=20).grid(row=0, column=2, padx=10, pady=5)
-    tk.Button(frame_adicionales, text="Cerrar", command=confirmar_salida, bg="#FF4500", fg="white", width=20).grid(
+    tk.Button(frame_adicionales, text="Cerrar Sesión", command=confirmar_salida, bg="#FF4500", fg="white", width=20).grid(
         row=0, column=3, padx=10, pady=5)
+    # Añadir un ComboBox para filtrar por categoría
+    frame_filtro_categoria = tk.Frame(app, bg="#2E3B55")
+    frame_filtro_categoria.pack(pady=5)
+    tk.Label(frame_filtro_categoria, text="Filtrar por Categoría:", bg="#2E3B55", fg="white").grid(row=0, column=0,
+                                                                                                   padx=5)
+    filtro_categoria_combobox = ttk.Combobox(frame_filtro_categoria, values=["Todas"] + categorias, state="readonly")
+    filtro_categoria_combobox.grid(row=0, column=1, padx=5)
+    filtro_categoria_combobox.set("Todas")  # Por defecto, mostramos todas las contraseñas
+    # Añadir un botón para aplicar el filtro
+    tk.Button(frame_filtro_categoria, text="Aplicar Filtro", command=buscar_contraseñas, bg="#4CAF50", fg="white",
+              width=20).grid(row=0, column=2, padx=10, pady=5)
+
     # Tabla de contraseñas
     frame_tabla = tk.Frame(app, bg="#2E3B55")
     frame_tabla.pack(pady=10, fill=tk.BOTH, expand=True)
