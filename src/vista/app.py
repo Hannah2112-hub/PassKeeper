@@ -112,15 +112,16 @@ def abrir_aplicacion(usuario_actual):
 
     # Función para actualizar la tabla
     def actualizar_tabla():
-        tabla.delete(*tabla.get_children())  # Limpiar la tabla antes de actualizar
+        tabla.delete(*tabla.get_children())
         contraseñas_ordenadas = obtener_contraseñas_ordenadas()
         if not contraseñas_ordenadas:
             tabla.insert("", "end", values=("No hay contraseñas", "", "", "", ""))
         else:
             for sitio, datos in contraseñas_ordenadas.items():
                 favorita = "⭐" if datos.get("favorita", False) else ""
-                categoria = datos.get("categoria", "Sin categoría")  # Mostrar la categoría
-                tabla.insert("", "end", values=(sitio, datos["usuario"], "********", favorita, categoria))
+                categoria = datos.get("categoria", "Sin categoría")
+                contraseña_mostrar = datos.get("contraseña_visible", "*******")
+                tabla.insert("", "end", values=(sitio, datos["usuario"], contraseña_mostrar, favorita, categoria))
 
     # Obtener el sitio seleccionado en la tabla
     def obtener_sitio_seleccionado():
@@ -151,16 +152,24 @@ def abrir_aplicacion(usuario_actual):
     def ver_contraseña_segura():
         sitio = obtener_sitio_seleccionado()
         if sitio:
-            # Solicitar la contraseña maestra
-            clave_ingresada = simpledialog.askstring("Ver Contraseña", "Ingrese su contraseña maestra:", show="*")
+            # Obtener la contraseña cifrada asociada al sitio
+            contraseña_cifrada = contraseñas[sitio]["contraseña"]
             clave_usuario = usuarios[usuario_actual]["clave"]
+            contraseña_descifrada = descifrar_contraseña(contraseña_cifrada, clave_usuario)
+            contraseñas[sitio]["contraseña_visible"] = contraseña_descifrada
 
-            if clave_ingresada and clave_ingresada == clave_usuario.decode():
-                # Si la contraseña es correcta, mostrar la contraseña descifrada
-                contraseña_descifrada = descifrar_contraseña(contraseñas[sitio]["contraseña"], clave_usuario)
-                messagebox.showinfo("Contraseña", f"La contraseña para {sitio} es: {contraseña_descifrada}")
-            else:
-                messagebox.showerror("Error", "Contraseña maestra incorrecta.")
+            actualizar_tabla()
+
+            app.after(5000, ocultar_contraseña, sitio)
+
+    def ocultar_contraseña(sitio):
+        """Oculta la contraseña volviendo a mostrar '*******' en la tabla."""
+        if sitio in contraseñas:
+            # Eliminar la contraseña visible y volver a enmascarar
+            if "contraseña_visible" in contraseñas[sitio]:
+                del contraseñas[sitio]["contraseña_visible"]
+
+            actualizar_tabla()
 
     def editar_contraseña():
         """Permite editar la contraseña de un sitio seleccionado."""
