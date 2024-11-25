@@ -26,8 +26,14 @@ def conectar_base_datos():
 
 
 # Función para obtener el usuario actual (por ejemplo, por nombre de usuario)
-def obtener_usuario_actual(session, nombre_usuario='JeanTacunan'):
-    return session.query(Usuario).filter(Usuario.nombre == nombre_usuario).first()  #aca puede estar el problema
+def obtener_usuario_actual(session, nombre_usuario):
+    usuario = session.query(Usuario).filter(Usuario.nombre == nombre_usuario).first()
+    if usuario:
+        return usuario
+    else:
+        messagebox.showerror("Error", f"Usuario '{nombre_usuario}' no encontrado en la base de datos.")
+        return None
+
 
 
 # Función para cifrar la contraseña (usamos hashlib para un ejemplo simple)
