@@ -27,7 +27,7 @@ def conectar_base_datos():
 
 # Función para obtener el usuario actual (por ejemplo, por nombre de usuario)
 def obtener_usuario_actual(session, nombre_usuario='JeanTacunan'):
-    return session.query(Usuario).filter(Usuario.nombre == nombre_usuario).first()
+    return session.query(Usuario).filter(Usuario.nombre == nombre_usuario).first()  #aca puede estar el problema
 
 
 # Función para cifrar la contraseña (usamos hashlib para un ejemplo simple)
@@ -132,21 +132,42 @@ def abrir_aplicacion(usuario_actual):
 
     def guardar_contraseña():
         """Guarda una nueva contraseña y la asigna a una categoría seleccionada."""
+
+        # Variables de entrada, asegúrate de que estas están definidas en el ámbito
         sitio = entry_sitio.get().strip()
         usuario_sitio = entry_usuario_sitio.get().strip()
         contraseña_sitio = entry_contraseña_sitio.get().strip()
-
-        # ComboBox para seleccionar la categoría
         categoria = categoria_combobox.get()  # Obtenemos la categoría seleccionada en el ComboBox
 
-        if not sitio or not usuario_sitio or not contraseña_sitio or not categoria:
-            messagebox.showerror("Error", "Todos los campos son obligatorios.")
+        if not sitio:
+            messagebox.showerror("Error", "El campo 'sitio' es obligatorio.")
+            return
+        if not usuario_sitio:
+            messagebox.showerror("Error", "El campo 'usuario' es obligatorio.")
+            return
+        if not contraseña_sitio:
+            messagebox.showerror("Error", "El campo 'contraseña' es obligatorio.")
+            return
+        if not categoria:
+            messagebox.showerror("Error", "Debe seleccionar una categoría.")
             return
 
-        clave_usuario = usuarios[usuario_actual]["Valor"]
-        agregar_contraseña_categoria(sitio, usuario_sitio, cifrar_contraseña(contraseña_sitio, clave_usuario),
-                                     categoria)
-        actualizar_tabla()
+        try:
+            # Asumimos que la variable `usuarios` y la función `cifrar_contraseña`, `agregar_contraseña_categoria`
+            # están definidas en el ámbito correspondiente.
+            clave_usuario = usuarios[usuario_actual]["Valor"]
+            contraseña_cifrada = cifrar_contraseña(contraseña_sitio, clave_usuario)
+
+            # Agregar la contraseña a la categoría correspondiente
+            agregar_contraseña_categoria(sitio, usuario_sitio, contraseña_cifrada, categoria)
+
+            # Actualizar la tabla de visualización de contraseñas
+            actualizar_tabla()
+
+        except KeyError as e:
+            messagebox.showerror("Error", f"Error en los datos del usuario: {e}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Ha ocurrido un error: {e}")
 
 
     def ver_contraseña_segura():
