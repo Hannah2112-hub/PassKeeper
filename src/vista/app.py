@@ -3,63 +3,12 @@ import random
 import tkinter as tk
 from tkinter import messagebox, ttk, simpledialog
 
-from sqlalchemy.orm import sessionmaker
-
-from src.DATABASE.DB import setup_database
 from src.logica.cifrado import cifrar_contraseña, descifrar_contraseña, generar_clave
 from src.logica.gestion import contraseñas, usuarios, agregar_contraseña_favorita, agregar_contraseña_categoria, obtener_contraseñas_ordenadas
-import hashlib
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import IntegrityError
-from src.DATABASE.DB import Usuario, Contrasena  # Asumiendo que los modelos están en models.py
 
 # Variable para el tiempo de inactividad en milisegundos
 tiempo_inactividad = 300000  # 5 minutos por defecto
 
-# Función para conectar a la base de datos
-def conectar_base_datos():
-    engine = create_engine("sqlite:///gestor_contrasenas.db")
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    return session
-
-
-# Función para obtener el usuario actual (por ejemplo, por nombre de usuario)
-def obtener_usuario_actual(session, nombre_usuario='JeanTacunan'):
-    return session.query(Usuario).filter(Usuario.nombre == nombre_usuario).first()  #aca puede estar el problema
-
-
-# Función para cifrar la contraseña (usamos hashlib para un ejemplo simple)
-def cifrar_contrasena(contraseña):
-    return hashlib.sha256(contraseña.encode()).hexdigest()
-
-
-# Función para guardar la contraseña en la base de datos
-def guardar_contrasena(session, sitio, usuario_sitio, contraseña_sitio, categoria, usuario_actual):
-    # Cifrar la contraseña antes de almacenarla
-    contrasena_cifrada = cifrar_contrasena(contraseña_sitio)
-
-    # Crear una nueva instancia de la clase Contrasena
-    nueva_contrasena = Contrasena(
-        sitio_web=sitio,
-        usuario_sitio=usuario_sitio,
-        contrasena_encriptada=contrasena_cifrada,
-        categoria=categoria,
-        usuario_id=usuario_actual.id  # Relacionamos la contraseña con el usuario actual
-    )
-
-    try:
-        # Agregar la nueva contraseña a la sesión
-        session.add(nueva_contrasena)
-        session.commit()
-        messagebox.showinfo("Éxito", "Contraseña guardada exitosamente.")
-    except IntegrityError:
-        session.rollback()
-        messagebox.showerror("Error", "Hubo un problema al guardar la contraseña.")
-    except Exception as e:
-        session.rollback()
-        messagebox.showerror("Error", f"Error inesperado: {e}")
 
 def cargar_login():
     from src.vista.login import abrir_login
@@ -112,16 +61,15 @@ def abrir_aplicacion(usuario_actual):
 
     # Función para actualizar la tabla
     def actualizar_tabla():
-        tabla.delete(*tabla.get_children())
+        tabla.delete(*tabla.get_children())  # Limpiar la tabla antes de actualizar
         contraseñas_ordenadas = obtener_contraseñas_ordenadas()
         if not contraseñas_ordenadas:
             tabla.insert("", "end", values=("No hay contraseñas", "", "", "", ""))
         else:
             for sitio, datos in contraseñas_ordenadas.items():
                 favorita = "⭐" if datos.get("favorita", False) else ""
-                categoria = datos.get("categoria", "Sin categoría")
-                contraseña_mostrar = datos.get("contraseña_visible", "*******")
-                tabla.insert("", "end", values=(sitio, datos["usuario"], contraseña_mostrar, favorita, categoria))
+                categoria = datos.get("categoria", "Sin categoría")  # Mostrar la categoría
+                tabla.insert("", "end", values=(sitio, datos["usuario"], "********", favorita, categoria))
 
     # Obtener el sitio seleccionado en la tabla
     def obtener_sitio_seleccionado():
@@ -130,67 +78,39 @@ def abrir_aplicacion(usuario_actual):
             return tabla.item(seleccionado)["values"][0]
         return None
 
+
     def guardar_contraseña():
         """Guarda una nueva contraseña y la asigna a una categoría seleccionada."""
-
-        # Variables de entrada, asegúrate de que estas están definidas en el ámbito
         sitio = entry_sitio.get().strip()
         usuario_sitio = entry_usuario_sitio.get().strip()
         contraseña_sitio = entry_contraseña_sitio.get().strip()
+
+        # ComboBox para seleccionar la categoría
         categoria = categoria_combobox.get()  # Obtenemos la categoría seleccionada en el ComboBox
 
-        if not sitio:
-            messagebox.showerror("Error", "El campo 'sitio' es obligatorio.")
-            return
-        if not usuario_sitio:
-            messagebox.showerror("Error", "El campo 'usuario' es obligatorio.")
-            return
-        if not contraseña_sitio:
-            messagebox.showerror("Error", "El campo 'contraseña' es obligatorio.")
-            return
-        if not categoria:
-            messagebox.showerror("Error", "Debe seleccionar una categoría.")
+        if not sitio or not usuario_sitio or not contraseña_sitio or not categoria:
+            messagebox.showerror("Error", "Todos los campos son obligatorios.")
             return
 
-        try:
-            # Asumimos que la variable `usuarios` y la función `cifrar_contraseña`, `agregar_contraseña_categoria`
-            # están definidas en el ámbito correspondiente.
-            clave_usuario = usuarios[usuario_actual]["Valor"]
-            contraseña_cifrada = cifrar_contraseña(contraseña_sitio, clave_usuario)
-
-            # Agregar la contraseña a la categoría correspondiente
-            agregar_contraseña_categoria(sitio, usuario_sitio, contraseña_cifrada, categoria)
-
-            # Actualizar la tabla de visualización de contraseñas
-            actualizar_tabla()
-
-        except KeyError as e:
-            messagebox.showerror("Error", f"Error en los datos del usuario: {e}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Ha ocurrido un error: {e}")
+        clave_usuario = usuarios[usuario_actual]["clave"]
+        agregar_contraseña_categoria(sitio, usuario_sitio, cifrar_contraseña(contraseña_sitio, clave_usuario),
+                                     categoria)
+        actualizar_tabla()
 
 
     def ver_contraseña_segura():
         sitio = obtener_sitio_seleccionado()
         if sitio:
-            # Obtener la contraseña cifrada asociada al sitio
-            contraseña_cifrada = contraseñas[sitio]["contraseña"]
+            # Solicitar la contraseña maestra
+            clave_ingresada = simpledialog.askstring("Ver Contraseña", "Ingrese su contraseña maestra:", show="*")
             clave_usuario = usuarios[usuario_actual]["clave"]
-            contraseña_descifrada = descifrar_contraseña(contraseña_cifrada, clave_usuario)
-            contraseñas[sitio]["contraseña_visible"] = contraseña_descifrada
 
-            actualizar_tabla()
-
-            app.after(5000, ocultar_contraseña, sitio)
-
-    def ocultar_contraseña(sitio):
-        """Oculta la contraseña volviendo a mostrar '*******' en la tabla."""
-        if sitio in contraseñas:
-            # Eliminar la contraseña visible y volver a enmascarar
-            if "contraseña_visible" in contraseñas[sitio]:
-                del contraseñas[sitio]["contraseña_visible"]
-
-            actualizar_tabla()
+            if clave_ingresada and clave_ingresada == clave_usuario.decode():
+                # Si la contraseña es correcta, mostrar la contraseña descifrada
+                contraseña_descifrada = descifrar_contraseña(contraseñas[sitio]["contraseña"], clave_usuario)
+                messagebox.showinfo("Contraseña", f"La contraseña para {sitio} es: {contraseña_descifrada}")
+            else:
+                messagebox.showerror("Error", "Contraseña maestra incorrecta.")
 
     def editar_contraseña():
         """Permite editar la contraseña de un sitio seleccionado."""

@@ -1,15 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox
-from sqlalchemy.orm import sessionmaker
-from src.DATABASE.DB import setup_database, Usuario
+from src.logica.gestion import usuarios, validar_contraseña
 from src.logica.cifrado import generar_clave, cifrar_contraseña
-from src.logica.gestion import validar_contraseña
 import re
-
-# Configurar conexión a la base de datos
-engine = setup_database()
-Session = sessionmaker(bind=engine)
-session = Session()
 
 
 def validar_correo(correo):
@@ -25,7 +18,6 @@ def abrir_registro(ventana_login):
     ventana_registro.geometry("400x300")
     ventana_registro.configure(bg="#2E3B55")
 
-    # Etiquetas y campos de entrada
     tk.Label(ventana_registro, text="Registro de Usuario", font=("Arial", 16), fg="white", bg="#2E3B55").pack(pady=10)
 
     tk.Label(ventana_registro, text="Usuario:", font=("Arial", 12), fg="white", bg="#2E3B55").pack(pady=5)
@@ -40,14 +32,11 @@ def abrir_registro(ventana_login):
     entry_password_registro = tk.Entry(ventana_registro, show="*")
     entry_password_registro.pack()
 
-    # Modificar el código de registro para guardar la clave generada
     def registrar_usuario():
-        """Valida y registra un nuevo usuario en la base de datos."""
         nombre_usuario = entry_usuario_registro.get().strip()
         correo = entry_email_registro.get().strip()
         contraseña = entry_password_registro.get().strip()
 
-        # Validaciones básicas
         if not nombre_usuario or not correo or not contraseña:
             messagebox.showerror("Error", "Todos los campos son obligatorios.")
             return
@@ -56,50 +45,22 @@ def abrir_registro(ventana_login):
             messagebox.showerror("Error", "El correo electrónico no es válido.")
             return
 
-        try:
-            # Verificar si el usuario o correo ya existe en la base de datos
-            usuario_existente = session.query(Usuario).filter(
-                (Usuario.nombre == nombre_usuario) | (Usuario.email == correo)
-            ).first()
+        if nombre_usuario in usuarios:
+            messagebox.showerror("Error", "El usuario ya está registrado.")
+            return
 
-            if usuario_existente:
-                messagebox.showerror("Error", "El usuario o correo ya está registrado.")
-                return
+        if not validar_contraseña(contraseña):
+            messagebox.showerror("Error", "La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y caracteres especiales.")
+            return
 
-            # Validar la fortaleza de la contraseña
-            if not validar_contraseña(contraseña):
-                messagebox.showerror(
-                    "Error",
-                    "La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y caracteres especiales."
-                )
-                return
+        clave_usuario = generar_clave()
+        usuarios[nombre_usuario] = {
+            "contraseña": cifrar_contraseña(contraseña, clave_usuario),
+            "correo": correo,
+            "clave": clave_usuario
+        }
 
-            # Generar una clave única y cifrar la contraseña
-            clave_usuario = generar_clave()  # Esta clave debe ser almacenada en la base de datos
-            contraseña_cifrada = cifrar_contraseña(contraseña, clave_usuario)
+        ventana_registro.destroy()
+        messagebox.showinfo("Éxito", "Usuario registrado exitosamente.")
 
-            # Crear un nuevo usuario
-            nuevo_usuario = Usuario(
-                nombre=nombre_usuario,
-                email=correo,
-                contrasena_maestra=contraseña_cifrada,
-                clave=clave_usuario  # Asegúrate de agregar este campo en el modelo Usuario
-            )
-
-            # Guardar el usuario en la base de datos
-            session.add(nuevo_usuario)
-            session.commit()  # Es importante realizar el commit para guardar los cambios
-
-            # Cerrar la ventana de registro y mostrar un mensaje de éxito
-            ventana_registro.destroy()
-            messagebox.showinfo("Éxito", "Usuario registrado exitosamente.")
-
-        except Exception as e:
-            session.rollback()  # Deshacer cualquier cambio en caso de error
-            print(f"Error al registrar el usuario: {e}")
-            messagebox.showerror("Error", "Ocurrió un error al registrar el usuario. Inténtalo nuevamente.")
-
-    # Botón para registrar al usuario
-    tk.Button(
-        ventana_registro, text="Registrar", command=registrar_usuario, bg="#4CAF50", fg="white"
-    ).pack(pady=10)
+    tk.Button(ventana_registro, text="Registrar", command=registrar_usuario, bg="#4CAF50", fg="white").pack(pady=10)
