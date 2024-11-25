@@ -40,4 +40,3 @@ def agregar_contraseña_categoria(sitio, usuario, contraseña, categoria):
         "contraseña": contraseña,
         "categoria": categoria  # Nuevo campo para la categoría
     }
-

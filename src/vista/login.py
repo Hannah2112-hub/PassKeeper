@@ -2,8 +2,10 @@ import tkinter as tk
 from tkinter import messagebox
 from src.vista.registro import abrir_registro
 from src.vista.app import abrir_aplicacion
-from src.logica.gestion import usuarios
 from src.logica.cifrado import descifrar_contraseña
+from src.DATABASE.DB import Usuario
+from sqlalchemy.orm import sessionmaker
+from src.DATABASE.DB import setup_database
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -11,9 +13,13 @@ import ssl
 
 # Configuración de correo
 USERNAME = "davidandreguevaramoscoso@gmail.com"
-PASSWORD = "grdt bfrj zedj uxzg"  # Sustitauye esto por tu contraseña correcta
+PASSWORD = "grdt bfrj zedj uxzg"  # Sustitúyelo por tu contraseña correcta
 DESTINATARIO = "72508579@continental.edu.pe"
 
+# Configurar conexión a la base de datos
+engine = setup_database()
+Session = sessionmaker(bind=engine)
+session = Session()
 
 def enviar_alerta_intentos():
     """Envía un correo de alerta por múltiples intentos fallidos."""
@@ -42,7 +48,6 @@ def enviar_alerta_intentos():
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
-
 def abrir_login():
     """Abre la ventana de inicio de sesión."""
     ventana_login = tk.Tk()
@@ -70,19 +75,38 @@ def abrir_login():
             messagebox.showerror("Error", "Todos los campos son obligatorios.")
             return
 
-        if nombre_usuario in usuarios:
-            clave = usuarios[nombre_usuario]["clave"]
-            contraseña_almacenada = usuarios[nombre_usuario]["contraseña"]
-            if descifrar_contraseña(contraseña_almacenada, clave) == contraseña:
+        try:
+            # Buscar el usuario en la base de datos
+            usuario = session.query(Usuario).filter_by(nombre=nombre_usuario).first()
+
+            if not usuario:
+                messagebox.showerror("Error", "Usuario no encontrado.")
+                return
+
+            # Imprimir para depuración
+            print(f"Contraseña ingresada: {contraseña}")
+            print(f"Contraseña almacenada (cifrada): {usuario.contrasena_maestra}")
+
+            # Aquí necesitamos la clave de cifrado que usaste al registrar al usuario
+            clave_usuario = usuario.clave  # Esto asume que tienes un campo 'clave' en el modelo Usuario
+            # Descifrar la contraseña almacenada
+            contrasena_descifrada = descifrar_contraseña(usuario.contrasena_maestra, clave_usuario)
+            print(f"Contraseña descifrada: {contrasena_descifrada}")
+
+            # Comparar las contraseñas
+            if contrasena_descifrada == contraseña:
                 messagebox.showinfo("Éxito", f"Bienvenido, {nombre_usuario}!")
                 ventana_login.destroy()  # Cierra la ventana de inicio de sesión
                 abrir_aplicacion(nombre_usuario)  # Abre la aplicación principal
-                return
+            else:
+                messagebox.showerror("Error", "Contraseña incorrecta.")
+                intentos_fallidos[0] += 1
 
-        # Incrementa el contador de intentos fallidos
-        intentos_fallidos[0] += 1
-        messagebox.showerror("Error", f"Credenciales incorrectas. Intentos fallidos: {intentos_fallidos[0]}")
+        except Exception as e:
+            print(f"Error al intentar iniciar sesión: {e}")
+            messagebox.showerror("Error", "Ocurrió un error al intentar iniciar sesión.")
 
+        # Si hay 5 intentos fallidos, enviar alerta
         if intentos_fallidos[0] == 5:
             enviar_alerta_intentos()  # Enviar correo de alerta
             messagebox.showwarning("Alerta", "Se han registrado 5 intentos fallidos. Se enviará una alerta.")

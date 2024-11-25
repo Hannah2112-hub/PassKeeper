@@ -3,12 +3,63 @@ import random
 import tkinter as tk
 from tkinter import messagebox, ttk, simpledialog
 
+from sqlalchemy.orm import sessionmaker
+
+from src.DATABASE.DB import setup_database
 from src.logica.cifrado import cifrar_contraseña, descifrar_contraseña, generar_clave
 from src.logica.gestion import contraseñas, usuarios, agregar_contraseña_favorita, agregar_contraseña_categoria, obtener_contraseñas_ordenadas
+import hashlib
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
+from src.DATABASE.DB import Usuario, Contrasena  # Asumiendo que los modelos están en models.py
 
 # Variable para el tiempo de inactividad en milisegundos
 tiempo_inactividad = 300000  # 5 minutos por defecto
 
+# Función para conectar a la base de datos
+def conectar_base_datos():
+    engine = create_engine("sqlite:///gestor_contrasenas.db")
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    return session
+
+
+# Función para obtener el usuario actual (por ejemplo, por nombre de usuario)
+def obtener_usuario_actual(session, nombre_usuario='JeanTacunan'):
+    return session.query(Usuario).filter(Usuario.nombre == nombre_usuario).first()
+
+
+# Función para cifrar la contraseña (usamos hashlib para un ejemplo simple)
+def cifrar_contrasena(contraseña):
+    return hashlib.sha256(contraseña.encode()).hexdigest()
+
+
+# Función para guardar la contraseña en la base de datos
+def guardar_contrasena(session, sitio, usuario_sitio, contraseña_sitio, categoria, usuario_actual):
+    # Cifrar la contraseña antes de almacenarla
+    contrasena_cifrada = cifrar_contrasena(contraseña_sitio)
+
+    # Crear una nueva instancia de la clase Contrasena
+    nueva_contrasena = Contrasena(
+        sitio_web=sitio,
+        usuario_sitio=usuario_sitio,
+        contrasena_encriptada=contrasena_cifrada,
+        categoria=categoria,
+        usuario_id=usuario_actual.id  # Relacionamos la contraseña con el usuario actual
+    )
+
+    try:
+        # Agregar la nueva contraseña a la sesión
+        session.add(nueva_contrasena)
+        session.commit()
+        messagebox.showinfo("Éxito", "Contraseña guardada exitosamente.")
+    except IntegrityError:
+        session.rollback()
+        messagebox.showerror("Error", "Hubo un problema al guardar la contraseña.")
+    except Exception as e:
+        session.rollback()
+        messagebox.showerror("Error", f"Error inesperado: {e}")
 
 def cargar_login():
     from src.vista.login import abrir_login
@@ -78,7 +129,6 @@ def abrir_aplicacion(usuario_actual):
             return tabla.item(seleccionado)["values"][0]
         return None
 
-
     def guardar_contraseña():
         """Guarda una nueva contraseña y la asigna a una categoría seleccionada."""
         sitio = entry_sitio.get().strip()
@@ -92,7 +142,7 @@ def abrir_aplicacion(usuario_actual):
             messagebox.showerror("Error", "Todos los campos son obligatorios.")
             return
 
-        clave_usuario = usuarios[usuario_actual]["clave"]
+        clave_usuario = usuarios[usuario_actual]["Valor"]
         agregar_contraseña_categoria(sitio, usuario_sitio, cifrar_contraseña(contraseña_sitio, clave_usuario),
                                      categoria)
         actualizar_tabla()
