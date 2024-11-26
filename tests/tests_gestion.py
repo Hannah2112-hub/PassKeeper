@@ -1,106 +1,91 @@
 import unittest
-import re
-
-# Diccionarios globales para almacenar datos
-usuarios = {}  # Almacena los datos de los usuarios
-contraseñas = {}  # Almacena las contraseñas de sitios web asociadas a los usuarios
-
-
-def validar_contraseña(contraseña):
-    """Verifica que la contraseña cumpla con los requisitos de seguridad."""
-    return (
-        len(contraseña) >= 8 and
-        re.search(r'[A-Z]', contraseña) and
-        re.search(r'[a-z]', contraseña) and
-        re.search(r'\d', contraseña) and
-        re.search(r'[!@#$%^&*(),.?":{}|<>]', contraseña) and
-        not re.search(r'\s', contraseña)  # Verifica que no haya espacios
-    )
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from src.DATABASE.DB import Base, Usuario, Contrasena
+from src.logica.gestion import (
+    validar_contraseña,
+    guardar_contraseña,
+    obtener_contraseñas_por_usuario,
+    descifrar_contraseña_usuario
+)
+from src.logica.cifrado import generar_clave, cifrar_contraseña
 
 
-def obtener_contraseñas_ordenadas():
-    """Devuelve las contraseñas ordenadas alfabéticamente por sitio web."""
-    return dict(sorted(contraseñas.items()))
+class TestGestion(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        """Configura una base de datos en memoria para las pruebas."""
+        cls.engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(cls.engine)
+        cls.Session = sessionmaker(bind=cls.engine)
+        cls.session = cls.Session()
+
+        # Crear un usuario de prueba con una clave válida
+        cls.clave_usuario = generar_clave()
+        cls.usuario = Usuario(
+            nombre="testuser",
+            email="testuser@example.com",
+            contrasena_maestra=cifrar_contraseña("password123", cls.clave_usuario),
+            clave=cls.clave_usuario
+        )
+        cls.session.add(cls.usuario)
+        cls.session.commit()
+
+    @classmethod
+    def tearDownClass(cls):
+        """Elimina la base de datos en memoria después de las pruebas."""
+        cls.session.close()
+        cls.engine.dispose()
+
+    def test_validar_contraseña(self):
+        """Prueba para verificar que la validación de contraseñas funciona correctamente."""
+        self.assertTrue(validar_contraseña("Password1!"))  # Contraseña válida
+        self.assertFalse(validar_contraseña("short"))  # Demasiado corta
+        self.assertFalse(validar_contraseña("nouppercase1!"))  # Sin mayúsculas
+        self.assertFalse(validar_contraseña("NOLOWERCASE1!"))  # Sin minúsculas
+        self.assertFalse(validar_contraseña("NoNumbers!"))  # Sin números
+        self.assertFalse(validar_contraseña("NoSpecialChar1"))  # Sin caracteres especiales
+        self.assertFalse(validar_contraseña("Spaces not allowed1!"))  # Contiene espacios
+
+    def test_guardar_contraseña(self):
+        """Prueba para verificar que una contraseña se guarda correctamente en la base de datos."""
+        mensaje = guardar_contraseña(
+            self.session,
+            self.usuario.id,
+            "example.com",
+            "user@example.com",
+            "mypassword",
+            "Trabajo"
+        )
+        self.assertEqual(mensaje, "Contraseña para example.com guardada exitosamente.")
+
+        # Verificar que la contraseña se haya guardado
+        contrasena = self.session.query(Contrasena).filter_by(sitio_web="example.com").first()
+        self.assertIsNotNone(contrasena)
+        self.assertEqual(contrasena.usuario_sitio, "user@example.com")
+
+    def test_descifrar_contraseña_usuario(self):
+        """Prueba para verificar que una contraseña se descifra correctamente."""
+        # Agregar una contraseña de prueba
+        guardar_contraseña(
+            self.session,
+            self.usuario.id,
+            "example3.com",
+            "user3@example.com",
+            "mypassword3",
+            "Otros"
+        )
+
+        contrasena_descifrada = descifrar_contraseña_usuario(self.session, self.usuario.id, "example3.com")
+        self.assertEqual(contrasena_descifrada, "mypassword3")
+
+    def test_error_descifrar_contraseña_usuario(self):
+        """Prueba para verificar que se lanza un error si no se encuentra la contraseña o el usuario."""
+        with self.assertRaises(ValueError):
+            descifrar_contraseña_usuario(self.session, self.usuario.id, "nonexistent.com")  # Sitio no existe
+        with self.assertRaises(ValueError):
+            descifrar_contraseña_usuario(self.session, 9999, "example3.com")  # Usuario no existe
 
 
-def agregar_contraseña_favorita(sitio, usuario, contraseña, favorita=False):
-    """Agrega una contraseña y la marca como favorita si es necesario."""
-    if sitio in contraseñas:
-        print(f"La contraseña para {sitio} ya existe. Actualizando...")
-    contraseñas[sitio] = {
-        "usuario": usuario,
-        "contraseña": contraseña,
-        "favorita": favorita  # Nuevo campo para marcar como favorita
-    }
-
-
-def agregar_contraseña_categoria(sitio, usuario, contraseña, categoria):
-    """Agrega una contraseña y la categoriza."""
-    contraseñas[sitio] = {
-        "usuario": usuario,
-        "contraseña": contraseña,
-        "categoria": categoria  # Nuevo campo para la categoría
-    }
-
-
-# Pruebas
-class TestContraseñas(unittest.TestCase):
-
-    def test_validar_contraseña_valida(self):
-        """Test para validar una contraseña correcta."""
-        self.assertTrue(validar_contraseña("MiContraseña123!"))
-
-    def test_validar_contraseña_invalida_sin_mayusculas(self):
-        """Test para validar una contraseña sin mayúsculas."""
-        self.assertFalse(validar_contraseña("micontaseña123!"))
-
-    def test_validar_contraseña_invalida_sin_minusculas(self):
-        """Test para validar una contraseña sin minúsculas."""
-        self.assertFalse(validar_contraseña("MICONTRASEÑA123!"))
-
-    def test_validar_contraseña_invalida_sin_numero(self):
-        """Test para validar una contraseña sin números."""
-        self.assertFalse(validar_contraseña("MiContraseña!"))
-
-    def test_validar_contraseña_invalida_sin_caracteres_especiales(self):
-        """Test para validar una contraseña sin caracteres especiales."""
-        self.assertFalse(validar_contraseña("MiContraseña123"))
-
-    def test_validar_contraseña_invalida_con_espacios(self):
-        """Test para validar una contraseña con espacios."""
-        self.assertFalse(validar_contraseña("Mi Contraseña 123!"))
-
-    def test_obtener_contraseñas_ordenadas(self):
-        """Test para verificar que las contraseñas se ordenen alfabéticamente."""
-        contraseñas.clear()  # Limpiar para pruebas
-        agregar_contraseña_favorita("google.com", "usuario1", "MiContraseña123!", favorita=True)
-        agregar_contraseña_favorita("facebook.com", "usuario2", "OtraContraseña123!", favorita=False)
-        contraseñas_ordenadas = obtener_contraseñas_ordenadas()
-        self.assertEqual(list(contraseñas_ordenadas.keys()), ['facebook.com', 'google.com'])
-
-    def test_agregar_contraseña_favorita(self):
-        """Test para verificar que se agregue una contraseña y se marque como favorita."""
-        contraseñas.clear()  # Limpiar para pruebas
-        agregar_contraseña_favorita("google.com", "usuario1", "MiContraseña123!", favorita=True)
-        self.assertTrue("google.com" in contraseñas)
-        self.assertEqual(contraseñas["google.com"]["favorita"], True)
-
-    def test_agregar_contraseña_categoria(self):
-        """Test para verificar que se agregue una contraseña con una categoría."""
-        contraseñas.clear()  # Limpiar para pruebas
-        agregar_contraseña_categoria("google.com", "usuario1", "MiContraseña123!", "Trabajo")
-        self.assertTrue("google.com" in contraseñas)
-        self.assertEqual(contraseñas["google.com"]["categoria"], "Trabajo")
-
-    def test_agregar_contraseña_existente(self):
-        """Test para verificar que al agregar una contraseña ya existente se actualice."""
-        contraseñas.clear()  # Limpiar para pruebas
-        agregar_contraseña_favorita("google.com", "usuario1", "MiContraseña123!", favorita=True)
-        agregar_contraseña_favorita("google.com", "usuario1", "NuevaContraseña456!", favorita=False)
-        self.assertEqual(contraseñas["google.com"]["contraseña"], "NuevaContraseña456!")
-        self.assertEqual(contraseñas["google.com"]["favorita"], False)
-
-
-# Ejecutar las pruebas
 if __name__ == "__main__":
     unittest.main()

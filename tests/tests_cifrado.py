@@ -34,6 +34,7 @@ class TestEncriptacion(unittest.TestCase):
         contraseña = "mi_contraseña_segura"
         contrasena_cifrada = cifrar_contraseña(contraseña, clave)
         self.assertIsInstance(contrasena_cifrada, bytes)  # La salida debe ser un objeto de tipo bytes
+        self.assertNotEqual(contraseña.encode(), contrasena_cifrada)  # El texto cifrado no debe ser igual al texto original
 
     def test_descifrar_contraseña(self):
         """Test para verificar que la contraseña se descifra correctamente."""
@@ -49,6 +50,16 @@ class TestEncriptacion(unittest.TestCase):
             cifrar_contraseña("", None)  # Debe lanzar un ValueError
         with self.assertRaises(ValueError):
             descifrar_contraseña(None, "")  # Debe lanzar un ValueError
+
+    def test_descifrar_con_clave_incorrecta(self):
+        """Test para verificar que descifrar con una clave incorrecta lanza un error."""
+        clave_correcta = generar_clave()
+        clave_incorrecta = generar_clave()
+        contraseña = "mi_contraseña_segura"
+        contrasena_cifrada = cifrar_contraseña(contraseña, clave_correcta)
+
+        with self.assertRaises(Exception):  # Puede ser ValueError o InvalidToken dependiendo del caso
+            descifrar_contraseña(contrasena_cifrada, clave_incorrecta)
 
 # Ejecutar las pruebas
 if __name__ == "__main__":
