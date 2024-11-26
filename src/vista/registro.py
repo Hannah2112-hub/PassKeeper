@@ -11,12 +11,10 @@ engine = setup_database()
 Session = sessionmaker(bind=engine)
 session = Session()
 
-
 def validar_correo(correo):
     """Valida que el correo tenga un formato válido."""
     patron = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     return re.match(patron, correo)
-
 
 def abrir_registro(ventana_login):
     """Abre la ventana de registro de usuario."""
@@ -40,7 +38,6 @@ def abrir_registro(ventana_login):
     entry_password_registro = tk.Entry(ventana_registro, show="*")
     entry_password_registro.pack()
 
-    # Modificar el código de registro para guardar la clave generada
     def registrar_usuario():
         """Valida y registra un nuevo usuario en la base de datos."""
         nombre_usuario = entry_usuario_registro.get().strip()

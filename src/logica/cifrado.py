@@ -28,5 +28,4 @@ def descifrar_contraseña(contrasena_cifrada, clave_usuario):
     cifrador = Fernet(clave_usuario)
 
     # Descifra la contraseña y la devuelve como cadena (utf-8)
-    return cifrador.decrypt(contrasena_cifrada).decode()  # Devuelve la contraseña descifrada en formato texto
-
+    return cifrador.decrypt(contrasena_cifrada).decode()  # Devuelve la contraseña descifrada en texto
