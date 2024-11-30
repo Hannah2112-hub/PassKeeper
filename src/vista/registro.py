@@ -20,21 +20,21 @@ def abrir_registro(ventana_login):
     """Abre la ventana de registro de usuario."""
     ventana_registro = tk.Toplevel(ventana_login)
     ventana_registro.title("Registro de Usuario")
-    ventana_registro.geometry("400x300")
-    ventana_registro.configure(bg="#2E3B55")
+    ventana_registro.geometry("450x350")
+    ventana_registro.configure(bg="#19222b")
 
     # Etiquetas y campos de entrada
-    tk.Label(ventana_registro, text="Registro de Usuario", font=("Arial", 16), fg="white", bg="#2E3B55").pack(pady=10)
+    tk.Label(ventana_registro, text="Registro de Usuario", font=("constantia", 32, "bold"), fg="white", bg="#19222b").pack(pady=5)
 
-    tk.Label(ventana_registro, text="Usuario:", font=("Arial", 12), fg="white", bg="#2E3B55").pack(pady=5)
+    tk.Label(ventana_registro, text="Usuario:", font=("Constantia", 24), fg="#ddd6cc", bg="#19222b").pack(pady=5)
     entry_usuario_registro = tk.Entry(ventana_registro)
     entry_usuario_registro.pack()
 
-    tk.Label(ventana_registro, text="Correo Electrónico:", font=("Arial", 12), fg="white", bg="#2E3B55").pack(pady=5)
+    tk.Label(ventana_registro, text="Correo Electrónico:", font=("Constantia", 24), fg="#ddd6cc", bg="#19222b").pack(pady=5)
     entry_email_registro = tk.Entry(ventana_registro)
     entry_email_registro.pack()
 
-    tk.Label(ventana_registro, text="Contraseña:", font=("Arial", 12), fg="white", bg="#2E3B55").pack(pady=5)
+    tk.Label(ventana_registro, text="Contraseña:", font=("Constantia", 24), fg="#ddd6cc", bg="#19222b").pack(pady=5)
     entry_password_registro = tk.Entry(ventana_registro, show="*")
     entry_password_registro.pack()
 
@@ -97,6 +97,4 @@ def abrir_registro(ventana_login):
             messagebox.showerror("Error", "Ocurrió un error al registrar el usuario. Inténtalo nuevamente.")
 
     # Botón para registrar al usuario
-    tk.Button(
-        ventana_registro, text="Registrar", command=registrar_usuario, bg="#4CAF50", fg="white"
-    ).pack(pady=10)
+    tk.Button(ventana_registro, text="Registrar", command=registrar_usuario, font=("Constantia", 12), bg="#b84356", fg="white").pack(pady=15)

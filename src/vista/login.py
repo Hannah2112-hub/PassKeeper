@@ -15,16 +15,16 @@ def abrir_login():
     """Abre la ventana de inicio de sesión."""
     ventana_login = tk.Tk()
     ventana_login.title("Inicio de Sesión")
-    ventana_login.geometry("400x300")
-    ventana_login.configure(bg="#2E3B55")
+    ventana_login.geometry("450x380")
+    ventana_login.configure(bg="#19222b")
 
-    tk.Label(ventana_login, text="Inicio de Sesión", font=("Arial", 16), fg="white", bg="#2E3B55").pack(pady=10)
+    tk.Label(ventana_login, text="Inicio de Sesión", font=("Constantia", 32, "bold"), fg="white", bg="#19222b").pack(pady=10)
 
-    tk.Label(ventana_login, text="Usuario:", font=("Arial", 12), fg="white", bg="#2E3B55").pack(pady=5)
+    tk.Label(ventana_login, text="Usuario:", font=("Constantia", 24), fg="#ddd6cc", bg="#19222b").pack(pady=5)
     entry_usuario = tk.Entry(ventana_login)
     entry_usuario.pack()
 
-    tk.Label(ventana_login, text="Contraseña:", font=("Arial", 12), fg="white", bg="#2E3B55").pack(pady=5)
+    tk.Label(ventana_login, text="Contraseña:", font=("Constantia", 24 ), fg="#ddd6cc", bg="#19222b").pack(pady=5)
     entry_password = tk.Entry(ventana_login, show="*")
     entry_password.pack()
 
@@ -58,10 +58,9 @@ def abrir_login():
 
     def registrar_usuario():
         """Abre la ventana de registro de usuario."""
-        ventana_login.destroy()
         abrir_registro(None)  # Llama a la función de registro
 
-    tk.Button(ventana_login, text="Iniciar Sesión", command=iniciar_sesion, bg="#4CAF50", fg="white").pack(pady=10)
-    tk.Button(ventana_login, text="Registrarse", command=registrar_usuario, bg="#FFA500", fg="white").pack(pady=10)  # Botón para registro
+    tk.Button(ventana_login, text="Iniciar Sesión", command=iniciar_sesion, font=("Constantia", 12), bg="#bd9341", fg="white").pack(pady=15)
+    tk.Button(ventana_login, text="Registrarse", command=registrar_usuario, font=("Constantia", 12), bg="#b84356", fg="white").pack(pady=0) # Botón para registro
 
     ventana_login.mainloop()
