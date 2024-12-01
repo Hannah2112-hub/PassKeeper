@@ -11,13 +11,14 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 # Variable global para el tiempo de inactividad
-tiempo_inactividad = 300000  # 5 minutos en milisegundos (valor inicial)
+tiempo_inactividad = 60000  # 5 minutos en milisegundos (valor inicial)
 
 
 def cargar_login():
     from src.vista.login import abrir_login
     return abrir_login
-    # Función para configurar el tiempo de inactividad
+
+
 def abrir_aplicacion(usuario_actual):
     """Abre la ventana principal de la aplicación."""
     # Configuración de la ventana principal
@@ -34,19 +35,25 @@ def abrir_aplicacion(usuario_actual):
     # Funciones principales
     # ======================
 
-
     def configurar_tiempo_inactividad():
         global tiempo_inactividad
         tiempo = simpledialog.askinteger("Tiempo de Inactividad", "Ingrese el tiempo de inactividad (en minutos):",
                                          minvalue=1, maxvalue=60)
         if tiempo:
-            tiempo_inactividad = tiempo * 6  # Convertir minutos a milisegundos
+            tiempo_inactividad = tiempo * 60000  # Convertir minutos a milisegundos
             messagebox.showinfo("Configuración Actualizada",
                                 f"El tiempo de inactividad se ha configurado a {tiempo} minutos.")
+            reiniciar_temporizador()  # Reiniciar el temporizador con el nuevo valor
 
+    def reiniciar_temporizador():
+        """Reinicia el temporizador con el nuevo valor de tiempo de inactividad."""
+        if hasattr(app, 'after_id'):  # Si ya existe un temporizador anterior, cancelarlo
+            app.after_cancel(app.after_id)
+        app.after_id = app.after(tiempo_inactividad, cierre_automatico)  # Establecer el nuevo temporizador
 
     def iniciar_temporizador():
-        app.after_id = app.after(tiempo_inactividad, cierre_automatico)
+        """Inicia el temporizador cuando la aplicación se abre."""
+        reiniciar_temporizador()
 
     def cierre_automatico():
         messagebox.showinfo("Cierre Automático", "La aplicación se cerrará por inactividad.")
@@ -64,7 +71,7 @@ def abrir_aplicacion(usuario_actual):
 
     def confirmar_salida():
         if messagebox.askyesno("Confirmar Cierre",
-                               "¿Estás seguro de que deseas cerrar la aplicación"):
+                               "¿Estás seguro de que deseas cerrar la aplicación?"):
             app.destroy()
 
 

@@ -1,4 +1,6 @@
-from sqlalchemy import create_engine, Column, Integer, String, Date, ForeignKey
+from xmlrpc.client import boolean
+
+from sqlalchemy import create_engine, Column, Integer, String, Date, ForeignKey, Boolean
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 # Base class for SQLAlchemy models
@@ -26,6 +28,7 @@ class Contrasena(Base):
     usuario_sitio = Column(String, nullable=False)
     contrasena_encriptada = Column(String, nullable=False)
     categoria = Column(String, nullable=True)
+    favorita = Column(Integer, default=0)
 
     # Relación con Usuario
     usuario_id = Column(Integer, ForeignKey('usuarios.id'), nullable=False)
