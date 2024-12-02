@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from src.DATABASE.DB import setup_database, Contrasena
 from src.logica.gestion import guardar_contraseña, obtener_contraseñas_por_usuario, descifrar_contraseña_usuario
 from src.logica.cifrado import cifrar_contraseña  # Necesario para cifrar la nueva contraseña
+from tkinter import simpledialog, messagebox
 
 # Configuración de la base de datos
 engine = setup_database()
@@ -12,6 +13,7 @@ session = Session()
 
 # Variable global para el tiempo de inactividad
 tiempo_inactividad = 60000  # 5 minutos en milisegundos (valor inicial)
+
 
 
 def cargar_login():
@@ -35,6 +37,7 @@ def abrir_aplicacion(usuario_actual):
     # Funciones principales
     # ======================
 
+    # Función para configurar el tiempo de inactividad
     def configurar_tiempo_inactividad():
         global tiempo_inactividad
         tiempo = simpledialog.askinteger("Tiempo de Inactividad", "Ingrese el tiempo de inactividad (en minutos):",
@@ -45,21 +48,33 @@ def abrir_aplicacion(usuario_actual):
                                 f"El tiempo de inactividad se ha configurado a {tiempo} minutos.")
             reiniciar_temporizador()  # Reiniciar el temporizador con el nuevo valor
 
-    def reiniciar_temporizador():
+    # Función para reiniciar el temporizador (acepta el argumento del evento)
+    def reiniciar_temporizador(event=None):
         """Reinicia el temporizador con el nuevo valor de tiempo de inactividad."""
         if hasattr(app, 'after_id'):  # Si ya existe un temporizador anterior, cancelarlo
             app.after_cancel(app.after_id)
         app.after_id = app.after(tiempo_inactividad, cierre_automatico)  # Establecer el nuevo temporizador
 
+    # Función para iniciar el temporizador cuando la aplicación se abre
     def iniciar_temporizador():
         """Inicia el temporizador cuando la aplicación se abre."""
         reiniciar_temporizador()
+        # Agregar la detección de actividad
+        detectar_actividad()
 
+    # Función para cerrar la aplicación automáticamente por inactividad
     def cierre_automatico():
         messagebox.showinfo("Cierre Automático", "La aplicación se cerrará por inactividad.")
         app.destroy()
         abrir_login = cargar_login()
         abrir_login()
+
+    # Función para detectar actividad (clic, movimiento del ratón, o tecla presionada)
+    def detectar_actividad():
+        """Detecta actividad del usuario y reinicia el temporizador cuando ocurre actividad."""
+        app.bind("<Button>", reiniciar_temporizador)  # Detecta clics en la ventana
+        app.bind("<Motion>", reiniciar_temporizador)  # Detecta movimiento del ratón
+        app.bind("<Key>", reiniciar_temporizador)  # Detecta teclas presionadas
 
     def confirmar_cerrar_sesion():
         """Confirma el cierre de la aplicación y regresa al login."""
