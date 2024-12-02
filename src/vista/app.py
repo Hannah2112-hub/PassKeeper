@@ -110,7 +110,7 @@ def abrir_aplicacion(usuario_actual):
                 print(f"Contraseña: {c['sitio']}, Favorita: {favorita}")
 
                 # Muestra la estrella si es favorita
-                tabla.insert("", "end", values=(c["sitio"], c["usuario"], "*******", c["categoria"], favorita))
+                tabla.insert("", "end", values=(c["sitio"], c["usuario"], "***", c["categoria"], favorita))
 
     def obtener_sitio_seleccionado():
         """Obtiene el sitio web seleccionado en la tabla."""
@@ -209,6 +209,53 @@ def abrir_aplicacion(usuario_actual):
             session.rollback()
             messagebox.showerror("Error", f"Error al eliminar la contraseña: {e}")
 
+    def buscar_contraseñas():
+        """Busca contraseñas por nombre de sitio web o categoría seleccionada, incluyendo las existentes en la BD."""
+        categoria_seleccionada = filtro_categoria_combobox.get()  # Categoría seleccionada
+        nombre_sitio = entry_sitio.get().strip()  # Texto ingresado en el campo de búsqueda
+
+        # Obtener todas las contraseñas del usuario actual desde la BD
+        contraseñas = obtener_contraseñas_por_usuario(session, usuario_actual.id)
+
+        # Lista para almacenar los resultados filtrados
+        resultados = []
+
+        # Aplicar filtros a las contraseñas recuperadas
+        for c in contraseñas:
+            # Asegúrate de que cada contraseña sea un diccionario; ajusta si no es así
+            sitio = c.get("sitio") if isinstance(c, dict) else c.sitio
+            categoria = c.get("categoria") if isinstance(c, dict) else c.categoria
+
+            # Filtro por categoría (excepto si es "Todas")
+            if categoria_seleccionada != "Todas" and categoria != categoria_seleccionada:
+                continue
+
+            # Filtro por nombre del sitio
+            if nombre_sitio and nombre_sitio.lower() not in sitio.lower():
+                continue
+
+            # Agregar al resultado (convertido a un formato uniforme)
+            resultados.append({
+                "sitio": sitio,
+                "usuario": c.get("usuario") if isinstance(c, dict) else c.usuario,
+                "contraseña": c.get("contraseña") if isinstance(c, dict) else c.contraseña,
+                "categoria": categoria
+            })
+
+        # Mostrar los resultados en la tabla
+        mostrar_resultados(resultados)
+
+    def mostrar_resultados(resultados):
+        """Muestra los resultados de búsqueda en la tabla."""
+        tabla.delete(*tabla.get_children())  # Limpia la tabla
+
+        if not resultados:
+            tabla.insert("", "end", values=("No hay resultados", "", "", "", ""))
+        else:
+            for c in resultados:
+                favorita = "★" if favoritos.get(c["sitio"], False) else ""
+                tabla.insert("", "end", values=(c["sitio"], c["usuario"], "***", c["categoria"], favorita))
+
     def marcar_como_favorita():
         """Marca o desmarca una contraseña como favorita."""
         sitio = obtener_sitio_seleccionado()  # Obtiene el sitio seleccionado en la tabla
@@ -281,7 +328,7 @@ def abrir_aplicacion(usuario_actual):
     filtro_categoria_combobox.grid(row=1, column=1, padx=5, pady=5)
     filtro_categoria_combobox.set("Todas")
 
-    tk.Button(frame_adicionales, text="Aplicar Filtro", font=("Constantia", 12), bg="white", fg="black", width=20).grid(row=1, column=2, padx=10, pady=5)
+    tk.Button(frame_adicionales, text="Aplicar Filtro", command=buscar_contraseñas, font=("Constantia", 12), bg="white", fg="black", width=20).grid(row=1, column=2, padx=10, pady=5)
 
     # ======================
     # Tabla de contraseñas
