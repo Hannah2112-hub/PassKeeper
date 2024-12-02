@@ -24,6 +24,7 @@ def cargar_login():
 
 
 def abrir_aplicacion(usuario_actual):
+
     """Abre la ventana principal de la aplicación."""
     # Configuración de la ventana principal
     app = tk.Tk()
@@ -114,6 +115,7 @@ def abrir_aplicacion(usuario_actual):
                 # Muestra la estrella si es favorita
                 tabla.insert("", "end", values=(c["sitio"], c["usuario"], "***", c["categoria"], favorita))
 
+
     def obtener_sitio_seleccionado():
         """Obtiene el sitio web seleccionado en la tabla."""
         seleccionado = tabla.focus()
@@ -124,7 +126,7 @@ def abrir_aplicacion(usuario_actual):
             return None
 
     def guardar_contraseña_evento():
-        """Guarda una nueva contraseña en la base de datos."""
+        """Guarda una nueva contraseña en la base de datos y limpia los campos de entrada."""
         sitio = entry_sitio.get().strip()
         usuario_sitio = entry_usuario_sitio.get().strip()
         contraseña_sitio = entry_contraseña_sitio.get().strip()
@@ -137,7 +139,16 @@ def abrir_aplicacion(usuario_actual):
         try:
             mensaje = guardar_contraseña(session, usuario_actual.id, sitio, usuario_sitio, contraseña_sitio, categoria)
             messagebox.showinfo("Éxito", mensaje)
+
+            # Limpiar los cuadros de texto después de guardar la contraseña
+            entry_sitio.delete(0, tk.END)
+            entry_usuario_sitio.delete(0, tk.END)
+            entry_contraseña_sitio.delete(0, tk.END)
+            categoria_combobox.set("Otros")  # Restablecer la categoría a la opción predeterminada
+
+            # Actualizar la tabla de contraseñas
             actualizar_tabla()
+
         except Exception as e:
             messagebox.showerror("Error", f"Error al guardar la contraseña: {e}")
 
@@ -380,6 +391,6 @@ def abrir_aplicacion(usuario_actual):
 
     # Añadir tabla al marco
     tabla.pack(fill=tk.BOTH, expand=True)
-    actualizar_tabla()
     iniciar_temporizador()
+    actualizar_tabla()
     app.mainloop()
