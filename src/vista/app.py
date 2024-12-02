@@ -74,16 +74,27 @@ def abrir_aplicacion(usuario_actual):
                                "¿Estás seguro de que deseas cerrar la aplicación?"):
             app.destroy()
 
+    # Diccionario global para almacenar los favoritos
+    favoritos = {}
 
     def actualizar_tabla():
         """Carga las contraseñas desde la base de datos y actualiza la tabla."""
         tabla.delete(*tabla.get_children())  # Limpia la tabla
         contraseñas = obtener_contraseñas_por_usuario(session, usuario_actual.id)
+
+        # Depuración: Verifica que las contraseñas se obtienen correctamente
+        print(f"Contraseñas obtenidas: {contraseñas}")
+
         if not contraseñas:
             tabla.insert("", "end", values=("No hay contraseñas", "", "", "", ""))
         else:
             for c in contraseñas:
-                favorita = "★" if c.get("favorita", False) else ""  # Muestra la estrella si es favorita
+                # Verifica si la contraseña está en el diccionario de favoritos
+                favorita = "★" if favoritos.get(c["sitio"], False) else ""
+
+                print(f"Contraseña: {c['sitio']}, Favorita: {favorita}")
+
+                # Muestra la estrella si es favorita
                 tabla.insert("", "end", values=(c["sitio"], c["usuario"], "*******", c["categoria"], favorita))
 
     def obtener_sitio_seleccionado():
@@ -190,24 +201,23 @@ def abrir_aplicacion(usuario_actual):
             return
 
         try:
-            # Buscar el registro en la base de datos
-            contrasena_obj = session.query(Contrasena).filter_by(usuario_id=usuario_actual.id, sitio_web=sitio).first()
-            if not contrasena_obj:
-                messagebox.showerror("Error", "No se encontró la contraseña en la base de datos.")
-                return
+            # Verifica si el sitio está en el diccionario de favoritos
+            if favoritos.get(sitio, False):
+                # Desmarcar como favorito
+                favoritos[sitio] = False
+                estado = "desmarcado como favorito"
+            else:
+                # Marcar como favorito
+                favoritos[sitio] = True
+                estado = "marcado como favorito"
 
-            # Alternar el estado de favorita
-            contrasena_obj.favorita = not contrasena_obj.favorita
-            session.commit()
-
-            estado = "marcado como favorito" if contrasena_obj.favorita else "desmarcado como favorito"
             messagebox.showinfo("Éxito", f"El sitio {sitio} ha sido {estado}.")
-            actualizar_tabla()  # Actualiza la tabla para reflejar el cambio
+
+            # Después de actualizar, refresca la tabla
+            actualizar_tabla()
+
         except Exception as e:
-            session.rollback()
             messagebox.showerror("Error", f"Error al marcar como favorito: {e}")
-
-
 
     # ======================
     # Entradas y botones
