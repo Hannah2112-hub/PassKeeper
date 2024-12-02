@@ -12,9 +12,10 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 def validar_correo(correo):
-    """Valida que el correo tenga un formato válido."""
-    patron = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-    return re.match(patron, correo)
+    patron = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$'
+    if ".." in correo:
+        return False
+    return bool(re.match(patron, correo))
 
 def abrir_registro(ventana_login):
     """Abre la ventana de registro de usuario."""
