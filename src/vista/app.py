@@ -1,3 +1,5 @@
+import random
+import string
 import tkinter as tk
 from tkinter import messagebox, ttk, simpledialog
 from sqlalchemy.orm import sessionmaker
@@ -281,6 +283,27 @@ def abrir_aplicacion(usuario_actual):
         except Exception as e:
             messagebox.showerror("Error", f"Error al marcar como favorito: {e}")
 
+    def generar_contraseña():
+        longitud = 12
+        caracteres = (
+                string.ascii_uppercase + string.ascii_lowercase + string.digits + string.punctuation
+        )
+        contraseña_segura = ''.join(random.choice(caracteres) for _ in range(longitud))
+        return contraseña_segura
+
+    # Función para manejar la generación y copia de contraseñas
+    def manejar_contraseña_segura():
+        nueva_contraseña = generar_contraseña()
+        copiar = messagebox.askyesno(
+            "Contraseña Generada",
+            f"Se ha generado la siguiente contraseña:\n{nueva_contraseña}\n\n¿Desea copiarla al portapapeles?"
+        )
+        if copiar:
+            app.clipboard_clear()
+            app.clipboard_append(nueva_contraseña)
+            app.update()
+            messagebox.showinfo("Copiada", "La contraseña ha sido copiada al portapapeles.")
+
     # ======================
     # Entradas y botones
     # ======================
@@ -321,6 +344,7 @@ def abrir_aplicacion(usuario_actual):
     tk.Button(frame_adicionales, text="Marcar como Favorito", command=marcar_como_favorita,font=("Constantia", 11), bg="#4CAF50", fg="white",width=20).grid(row=0, column=0, padx=10, pady=5)
     tk.Button(frame_adicionales, text="Configurar Inactividad",command=configurar_tiempo_inactividad, font=("Constantia", 11), bg="#4CAF50",fg="white", width=20).grid(row=0, column=1, padx=10, pady=5)
     tk.Button(frame_adicionales, text="Cerrar Sesión", command=confirmar_cerrar_sesion, font=("Constantia", 11), bg="#FF4500", fg="white", width=20).grid(row=0, column=2,padx=10, pady=5)
+    tk.Button(frame_adicionales, text="Generar Contraseña Segura", command=manejar_contraseña_segura, font=("Constantia", 11), bg="#4CAF50", fg="white", width=20).grid(row=2, column=0, columnspan=3, pady=10)
 
     # Filtrar por categoría dentro de Opciones Adicionales
     tk.Label(frame_adicionales, text="Filtrar por Categoría:", font=("Constantia", 12), bg="#19222b", fg="white").grid(row=1, column=0, padx=5,pady=5)
