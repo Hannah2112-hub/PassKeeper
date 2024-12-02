@@ -1,4 +1,6 @@
 import unittest
+import string
+import random
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.DATABASE.DB import Base, Usuario, Contrasena
@@ -107,6 +109,33 @@ class TestApp(unittest.TestCase):
         # Verificar que se haya eliminado
         contrasena_eliminada = self.session.query(Contrasena).filter_by(sitio_web="example4.com").first()
         self.assertIsNone(contrasena_eliminada)
+
+def generar_contraseña():
+    longitud = 12
+    caracteres = (
+            string.ascii_uppercase + string.ascii_lowercase + string.digits + string.punctuation
+    )
+    contraseña_segura = ''.join(random.choice(caracteres) for _ in range(longitud))
+    return contraseña_segura
+
+# Clase para pruebas unitarias
+class TestGeneradorContraseña(unittest.TestCase):
+    def test_longitud_contraseña(self):
+        """Verifica que la contraseña generada tenga la longitud esperada."""
+        contraseña = generar_contraseña()
+        self.assertEqual(len(contraseña), 12, "La contraseña no tiene la longitud correcta.")
+
+    def test_caracteres_validos(self):
+        """Verifica que la contraseña generada contenga solo caracteres válidos."""
+        caracteres_validos = string.ascii_uppercase + string.ascii_lowercase + string.digits + string.punctuation
+        contraseña = generar_contraseña()
+        for char in contraseña:
+            self.assertIn(char, caracteres_validos, f"El carácter '{char}' no es válido en la contraseña.")
+
+    def test_variedad_en_contraseñas(self):
+        """Verifica que las contraseñas generadas no sean iguales (aleatoriedad)."""
+        contraseñas = {generar_contraseña() for _ in range(10)}
+        self.assertGreater(len(contraseñas), 1, "La función genera contraseñas idénticas.")
 
 if __name__ == "__main__":
     unittest.main()
